@@ -61,3 +61,14 @@ func (hc *HealthChecker) IsHealthy(u *url.URL) bool {
 	defer hc.mu.RUnlock()
 	return hc.status[u.String()]
 }
+
+func (hc *HealthChecker) GetAllStatuses() map[string]bool {
+	hc.mu.RLock()
+	defer hc.mu.RUnlock()
+
+	snapshot := make(map[string]bool)
+	for backend, status := range hc.status {
+		snapshot[backend] = status
+	}
+	return snapshot
+}

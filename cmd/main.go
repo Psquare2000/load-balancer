@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"time"
 
+	"encoding/json"
 	"go-load-balancer/internal/balancer"
 	"go-load-balancer/internal/health"
 	"go-load-balancer/internal/proxy"
@@ -27,9 +28,18 @@ func main() {
 		parsedUrls = append(parsedUrls, u)
 	}
 	hc.Start(parsedUrls, 5*time.Second)
+	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		statuses := hc.GetAllStatuses()
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(statuses)
+	})
 
 	log.Println("[INFO] Load balancer running on :8080")
-	if err := http.ListenAndServe(":8080", handler); err != nil {
-		log.Fatal("[ERROR] Failed to start server:", err)
-	}
+	// if err := http.ListenAndServe(":8080", handler); err != nil {
+	// 	log.Fatal("[ERROR] Failed to start server:", err)
+	// }
+	http.Handle("/", handler)                    // default handler for all traffic
+	log.Fatal(http.ListenAndServe(":8080", nil)) // nil = use default mux
+
 }
